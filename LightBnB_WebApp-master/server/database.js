@@ -135,16 +135,13 @@ const getAllProperties = function(options, limit = 10) {
   if(options.minimum_rating){    
     queryParameters.push(Number(options.minimum_rating));
     queryString += ` HAVING AVG(PR.rating) >= $${queryParameters.length}`;
-  }
-  
+  } 
 
   queryParameters.push(limit);
   queryString +=`
   ORDER by P.cost_per_night
-  LIMIT $${queryParameters.length};`;  
- 
-  console.log(queryString);
-  console.log(queryParameters);
+  LIMIT $${queryParameters.length};`;   
+  
   return pool.query(queryString,queryParameters)
   .then(data => data.rows);  
 }
@@ -157,9 +154,23 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  
+  let queryString = `
+    INSERT INTO properties (`;
+  queryString += `${Object.keys(property).join(',')})`;
+  queryString +=`  VALUES 
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`;
+
+  let queryParameters = [];   
+  for(let k in property){
+    queryParameters.push(property[k]);
+  }  
+    
+  return pool.query(queryString,queryParameters)
+  .then(data => data.rows[0]);
+  // const propertyId = Object.keys(properties).length + 1;
+  // property.id = propertyId;
+  // properties[propertyId] = property;
+  // return Promise.resolve(property);
 }
 exports.addProperty = addProperty;
